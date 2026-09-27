@@ -1,1 +1,48 @@
-const menu=document.querySelector('.menu');const nav=document.querySelector('nav');menu?.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close navigation':'Open navigation')});document.querySelectorAll('nav a').forEach(link=>link.addEventListener('click',()=>{nav.classList.remove('open');menu?.setAttribute('aria-expanded','false')}));document.querySelector('#year').textContent=new Date().getFullYear();document.querySelector('#enquiry-form')?.addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget;const name=form.elements.name.value.trim();const business=form.elements.business.value.trim();const type=form.elements.type.value;const subject=encodeURIComponent('KasiBooked preview request — '+business);const body=encodeURIComponent('Hi KasiBooked,\n\nI would like a free preview for '+business+'.\n\nMy name: '+name+'\nBusiness type: '+type+'\n\nPlease contact me with the next steps.');const note=form.querySelector('.form-note');note.textContent='Thanks — your email app will open with your request ready to send.';window.location.href='mailto:sihlejeromenyendwana@gmail.com?subject='+subject+'&body='+body})
+const menuButton = document.querySelector('.menu-toggle');
+const nav = document.querySelector('.nav');
+const navLinks = document.querySelectorAll('.nav a');
+
+menuButton?.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+    menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+});
+
+navLinks.forEach(link => link.addEventListener('click', () => {
+    nav.classList.remove('open');
+    menuButton?.setAttribute('aria-expanded', 'false');
+    menuButton?.setAttribute('aria-label', 'Open navigation');
+}));
+
+document.querySelector('#year').textContent = new Date().getFullYear();
+
+const enquiryForm = document.querySelector('#enquiry-form');
+const enquiryNote = enquiryForm?.querySelector('.form-note');
+
+if (new URLSearchParams(window.location.search).get('enquiry') === 'sent') {
+    enquiryNote?.classList.add('success');
+    if (enquiryNote) enquiryNote.textContent = 'Thanks — your request is on its way. We’ll contact you on WhatsApp.';
+    history.replaceState({}, document.title, `${window.location.pathname}#contact`);
+}
+
+enquiryForm?.addEventListener('submit', (event) => {
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
+
+                                if (!form.checkValidity()) {
+                                      event.preventDefault();
+                                      form.reportValidity();
+                                      return;
+                                }
+
+                                if (form.elements._honey?.value) {
+                                      event.preventDefault();
+                                      return;
+                                }
+
+                                if (submitButton) {
+                                      submitButton.disabled = true;
+                                      submitButton.textContent = 'Sending your request…';
+                                }
+    if (enquiryNote) enquiryNote.textContent = 'Sending your request…';
+});
