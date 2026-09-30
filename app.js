@@ -1,1 +1,75 @@
-const menuButton = document.querySelector('.menu-toggle');\nconst nav = document.querySelector('.nav');\nconst navLinks = document.querySelectorAll('.nav a');\n\nmenuButton?.addEventListener('click', () => {\n    const open = nav.classList.toggle('open');\n    menuButton.setAttribute('aria-expanded', String(open));\n    menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');\n});\n\nnavLinks.forEach(link => link.addEventListener('click', () => {\n    nav.classList.remove('open');\n    menuButton?.setAttribute('aria-expanded', 'false');\n    menuButton?.setAttribute('aria-label', 'Open navigation');\n}));\n\ndocument.querySelector('#year').textContent = new Date().getFullYear();\n\nconst enquiryForm = document.querySelector('#enquiry-form');\nconst enquiryNote = enquiryForm?.querySelector('.form-note');\n\nif (new URLSearchParams(window.location.search).get('enquiry') === 'sent') {\n    enquiryNote?.classList.add('success');\n    if (enquiryNote) enquiryNote.textContent = 'Thanks \u2014 your request is on its way. We\u2019ll contact you on WhatsApp.';\n    history.replaceState({}, document.title, `${window.location.pathname}#contact`);\n}\n\nenquiryForm?.addEventListener('submit', (event) => {\n    event.preventDefault();\n    const form = event.currentTarget;\n\n    if (!form.checkValidity()) {\n        form.reportValidity();\n        return;\n    }\n\n    if (form.elements._honey?.value) return;\n\n    const details = new FormData(form);\n    const message = [\n        'Hello Nyendwana Techworks, I\u2019d like a free KasiBooked preview.',\n        '',\n        `Name: ${details.get('name')}`,\n        `Business: ${details.get('business')}`,\n        `WhatsApp: ${details.get('whatsapp')}`,\n        `Business type: ${details.get('type')}`,\n        '',\n        'Please contact me about a booking website.'\n    ].join('\n');\n\n    if (enquiryNote) {\n        enquiryNote.classList.add('success');\n        enquiryNote.textContent = 'WhatsApp is opening with your enquiry ready to send.';\n    }\n\n    window.location.href = `https://wa.me/${form.dataset.whatsapp || '27676942515'}?text=${encodeURIComponent(message)}`;\n});\n
+const menuButton = document.querySelector('.menu-toggle');
+const nav = document.querySelector('.nav');
+const navLinks = document.querySelectorAll('.nav a');
+
+menuButton?.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+    menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+});
+
+navLinks.forEach(link => link.addEventListener('click', () => {
+    nav.classList.remove('open');
+    menuButton?.setAttribute('aria-expanded', 'false');
+    menuButton?.setAttribute('aria-label', 'Open navigation');
+}));
+
+document.querySelector('#year').textContent = new Date().getFullYear();
+
+const enquiryForm = document.querySelector('#enquiry-form');
+const enquiryNote = enquiryForm?.querySelector('.form-note');
+
+enquiryForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    if (form.elements._honey?.value) return;
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending your request…';
+    }
+    if (enquiryNote) {
+        enquiryNote.classList.remove('success');
+        enquiryNote.textContent = 'Sending your request…';
+    }
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { Accept: 'application/json' }
+        });
+        if (!response.ok) throw new Error('Form delivery failed');
+
+        form.reset();
+        if (enquiryNote) {
+            enquiryNote.classList.add('success');
+            enquiryNote.textContent = 'Thanks — your request is in. We’ll contact you on WhatsApp.';
+        }
+    } catch (error) {
+        const details = new FormData(form);
+        const message = [
+            'Hello Nyendwana Techworks, I’d like a free KasiBooked preview.',
+            '',
+            `Name: ${details.get('name')}`,
+            `Business: ${details.get('business')}`,
+            `WhatsApp: ${details.get('whatsapp')}`,
+            `Business type: ${details.get('type')}`,
+            '',
+            'Please contact me about a booking website.'
+        ].join('\n');
+        if (enquiryNote) enquiryNote.textContent = 'Email delivery had a hiccup — WhatsApp is opening with your enquiry ready to send.';
+        window.location.href = `https://wa.me/${form.dataset.whatsapp}?text=${encodeURIComponent(message)}`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Request a free preview →';
+        }
+    }
+});
